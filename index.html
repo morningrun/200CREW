@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>200CREW 자동 리포트 생성기</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; margin: 20px; background-color: #f8f9fa; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #333; text-align: center; }
+        .upload-box { border: 2px dashed #007bff; padding: 20px; text-align: center; border-radius: 6px; background: #f1f8ff; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background-color: #007bff; color: white; }
+        .btn { background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        .btn:hover { background: #218838; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>🏃‍♂️ 200CREW 월간 챌린지 자동 리포트</h2>
+    
+    <div class="upload-box">
+        <p>스트라바 챌린지 순위 캡처 화면을 업로드하세요.</p>
+        <input type="file" id="imageInput" accept="image/*" onchange="processImage(event)">
+    </div>
+
+    <div id="loading" style="display:none; text-align:center; color: #007bff; font-weight: bold;">📸 캡처 이미지를 분석하고 있습니다... 잠시만 기다려주세요!</div>
+
+    <h3>📊 분석된 순위 및 리포트 미리보기</h3>
+    <table id="resultTable">
+        <thead>
+            <tr>
+                <th>순위</th>
+                <th>이름</th>
+                <th>이번달 운동거리</th>
+                <th>200km 달성여부</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td colspan="4">이미지를 업로드하면 데이터가 여기에 표시됩니다.</td></tr>
+        </tbody>
+    </table>
+    
+    <button class="btn" onclick="saveToGoogleSheet()">구글 시트에 저장 및 반영</button>
+</div>
+
+<script>
+    let extractedData = [];
+
+    function processImage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        document.getElementById('loading').style.display = 'block';
+
+        // 이미지 속 텍스트 추출 시뮬레이션 (실제 구동 시 Tesseract.js 라이브러리 또는 AI 비전 API 연동)
+        setTimeout(() => {
+            document.getElementById('loading').style.display = 'none';
+            
+            // 예시 추출 데이터 (스트라바 캡처 화면 분석 결과 가정)
+            extractedData = [
+                { rank: 1, name: "정범희", distance: 389.28 },
+                { rank: 2, name: "김진철", distance: 421.26 },
+                { rank: 3, name: "정하근", distance: 300.83 },
+                { rank: 4, name: "송재동", distance: 286.66 },
+                { rank: 5, name: "이실권", distance: 21.05 }
+            ];
+
+            let tbody = document.querySelector("#resultTable tbody");
+            tbody.innerHTML = "";
+
+            extractedData.forEach(item => {
+                let isSuccess = item.distance >= 200 ? "O (달성)" : "X";
+                let row = `<tr>
+                    <td>${item.rank}</td>
+                    <td>${item.name}</td>
+                    <td><b>${item.distance} km</b></td>
+                    <td>${isSuccess}</td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }, 1500);
+    }
+
+    function saveToGoogleSheet() {
+        if (extractedData.length === 0) {
+            alert("저장할 데이터가 없습니다. 먼저 캡처 이미지를 업로드해주세요.");
+            return;
+        }
+        
+        // 구글 앱스 스크립트 웹앱 URL 연동 지점
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzqkHYBTQXuGNAVJx0MfZlZgNBZHzXLVZbzj866OlsHyhL5VCr9uEnNBL6AJ2eqJdKeyw/exec";
+        
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            body: JSON.stringify({ action: "saveData", rows: extractedData })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert("구글 시트에 성공적으로 반영되었습니다!");
+        })
+        .catch(err => {
+            console.error(err);
+            alert("저장 중 오류가 발생했습니다. URL을 확인해주세요.");
+        });
+    }
+</script>
+</body>
+</html>
